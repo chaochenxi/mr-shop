@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>mingrui-shop-basic-eureka-server</module>
+        <module>mingrui-shop-basic-zuul-server</module>
     </modules>
 
 </project>
