@@ -44,15 +44,27 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
     @Override
     public Result<PageInfo<BrandEntity>> getBrandInfo(BrandDTO brandDTO) {
 
-        PageHelper.startPage(brandDTO.getPage(),brandDTO.getRows());
+        if(ObjectUtil.isNotNull(brandDTO.getPage())
+                && ObjectUtil.isNotNull(brandDTO.getRows()))
+            PageHelper.startPage(brandDTO.getPage(),brandDTO.getRows());
+
+//        PageHelper.startPage(brandDTO.getPage(),brandDTO.getRows());
 
         Example example = new Example(BrandEntity.class);
 
-
+        //排序
         if(StringUtil.isNotEmpty(brandDTO.getSort())) example.setOrderByClause(brandDTO.getOrderByClause());
 
-        if (StringUtil.isNotEmpty(brandDTO.getName())) example.createCriteria()
-                .andLike("name","%" + brandDTO.getName() + "%");
+        Example.Criteria criteria = example.createCriteria();
+        if(ObjectUtil.isNotNull(brandDTO.getId()))
+            criteria.andEqualTo("id",brandDTO.getId());
+
+        if(StringUtil.isNotEmpty(brandDTO.getName()))
+            criteria.andLike("name","%" + brandDTO.getName() + "%");
+
+        //条件查询
+//        if (StringUtil.isNotEmpty(brandDTO.getName())) example.createCriteria()
+//                .andLike("name","%" + brandDTO.getName() + "%");
 
         //查询
         List<BrandEntity> list = brandMapper.selectByExample(example);
