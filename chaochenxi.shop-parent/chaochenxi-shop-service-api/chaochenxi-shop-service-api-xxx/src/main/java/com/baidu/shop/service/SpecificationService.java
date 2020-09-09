@@ -34,7 +34,7 @@ public interface SpecificationService {
     Result<JSONObject> delete(Integer id);
 
     @ApiOperation(value = "查询规格参数")
-    @GetMapping(value = "specgroup/getSpecParamInfo")
+    @GetMapping(value = "specparam/getSpecParamInfo")
     Result<List<SpecParamEntity>> getSpecParamInfo(SpecParamDTO specParamDTO);
 
     @ApiOperation(value = "新增规格参数")

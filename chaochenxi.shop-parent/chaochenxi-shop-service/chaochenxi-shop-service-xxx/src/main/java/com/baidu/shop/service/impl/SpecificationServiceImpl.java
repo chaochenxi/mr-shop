@@ -85,12 +85,16 @@ public class SpecificationServiceImpl extends BaseApiService implements Specific
     @Override
     public Result<List<SpecParamEntity>> getSpecParamInfo(SpecParamDTO specParamDTO) {
 
-        if(ObjectUtil.isNull(specParamDTO.getGroupId())){
-            return this.setResultError("规格组id不能为空");
+        Example example = new Example(SpecParamEntity.class);
+        Example.Criteria criteria = example.createCriteria();
+        if(ObjectUtil.isNotNull(specParamDTO.getGroupId())){
+            criteria.andEqualTo("groupId",specParamDTO.getGroupId());
         }
 
-        Example example = new Example(SpecParamEntity.class);
-        example.createCriteria().andEqualTo("groupId",specParamDTO.getGroupId());
+        if(ObjectUtil.isNotNull(specParamDTO.getCid())){
+            criteria.andEqualTo("cid",specParamDTO.getCid());
+        }
+
 
         List<SpecParamEntity> list = specParamMapper.selectByExample(example);
 

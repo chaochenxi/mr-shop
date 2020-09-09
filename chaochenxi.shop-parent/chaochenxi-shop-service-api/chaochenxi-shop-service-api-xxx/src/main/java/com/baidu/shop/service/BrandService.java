@@ -20,10 +20,6 @@ public interface BrandService {
     @ApiOperation(value = "查询品牌信息")
     Result<PageInfo<BrandEntity>> getBrandInfo(BrandDTO brandDTO);
 
-//    @PostMapping(value = "brand/save")
-//    @ApiOperation(value = "查询品牌信息")
-//    Result<JsonObject> saveBrand(@Validated({MingruiOperation.Add.class}) @RequestBody BrandDTO brandDTO);
-
     @PostMapping(value = "brand/save")
     @ApiOperation(value = "查询品牌信息")
     Result<JsonObject> saveBrand(@Validated({MingruiOperation.Add.class}) @RequestBody BrandDTO brandDTO);
@@ -35,4 +31,9 @@ public interface BrandService {
     @DeleteMapping(value = "brand/delete")
     @ApiOperation(value = "通过id删除品牌信息")
     Result<JsonObject> deleteBrand(Integer id);
+
+    @GetMapping(value = "brand/getBrandBycate")
+    @ApiOperation(value = "通过分类id查询品牌信息")
+    Result<List<BrandEntity>> getBrandByCate(Integer cid);
+
 }
