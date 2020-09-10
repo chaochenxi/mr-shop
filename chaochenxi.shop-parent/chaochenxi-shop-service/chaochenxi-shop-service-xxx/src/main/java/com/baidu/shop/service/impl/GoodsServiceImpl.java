@@ -62,41 +62,25 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
 
         //删除spu
         spuMapper.deleteByPrimaryKey(spuId);
-        //删除spuDetail
+        //删除detail
         spuDetailMapper.deleteByPrimaryKey(spuId);
 
-        //查询
-        List<Long> skuIdArr = this.getSkuIdArrBySpuId(spuId);
-        if(skuIdArr.size() > 0){//尽量加上判断避免全表数据被删除!!!!!!!!!!!!!!!
-            //删除skus
-            skuMapper.deleteByIdList(skuIdArr);
-            //删除stock,与修改时的逻辑一样,先查询出所有将要修改skuId然后批量删除
-            stockMapper.deleteByIdList(skuIdArr);
-        }
-
+        this.delSkusAndStocks(spuId);
         return this.setResultSuccess();
     }
 
-    //重复代码抽取出来
-    private List<Long> getSkuIdArrBySpuId(Integer spuId){
+    private void delSkusAndStocks(Integer spuId){
         Example example = new Example(SkuEntity.class);
         example.createCriteria().andEqualTo("spuId",spuId);
-        List<SkuEntity> skuEntities = skuMapper.selectByExample(example);
-        return skuEntities.stream().map(sku -> sku.getId()).collect(Collectors.toList());
-    }
-
-    @Override
-    public Result<SpuDetailEntity> getSpuDetailBydSpu(Integer spuId) {
-
-        SpuDetailEntity spuDetailEntity = spuDetailMapper.selectByPrimaryKey(spuId);
-        return this.setResultSuccess(spuDetailEntity);
-    }
-
-    @Override
-    public Result<List<SkuDTO>> getSkuBySpuId(Integer spuId) {
-
-        List<SkuDTO> list = skuMapper.selectSkuAndStockBySpuId(spuId);
-        return this.setResultSuccess(list);
+        //通过spuId查询出来将要被删除的Sku
+        List<Long> skuIdList = skuMapper.selectByExample(example)
+                .stream()
+                .map(sku -> sku.getId())
+                .collect(Collectors.toList());
+        //通过skuId集合删除sku
+        skuMapper.deleteByIdList(skuIdList);
+        //通过skuId集合删除stock
+        stockMapper.deleteByIdList(skuIdList);
     }
 
     @Transactional
@@ -111,17 +95,7 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         //修改spudetail
         spuDetailMapper.updateByPrimaryKeySelective(BaiduBeanUtil.copyProperties(spuDTO.getSpuDetail(),SpuDetailEntity.class));
 
-        Example example = new Example(SkuEntity.class);
-        example.createCriteria().andEqualTo("spuId",spuDTO.getId());
-        //通过spuId查询出来将要被删除的Sku
-        List<SkuEntity> skuEntityList = skuMapper.selectByExample(example);
-        List<Long> skuIdList = skuEntityList.stream().map(sku -> {
-            return sku.getId();
-        }).collect(Collectors.toList());
-        //通过skuId集合删除sku
-        skuMapper.deleteByIdList(skuIdList);
-        //通过skuId集合删除stock
-        stockMapper.deleteByIdList(skuIdList);
+        this.delSkusAndStocks(spuDTO.getId());
 
         //新增 sku和stock数据
         spuDTO.getSkus().stream().forEach(skuDTO -> {
@@ -140,6 +114,20 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
 
         });
         return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<SpuDetailEntity> getSpuDetailBydSpu(Integer spuId) {
+
+        SpuDetailEntity spuDetailEntity = spuDetailMapper.selectByPrimaryKey(spuId);
+        return this.setResultSuccess(spuDetailEntity);
+    }
+
+    @Override
+    public Result<List<SkuDTO>> getSkuBySpuId(Integer spuId) {
+
+        List<SkuDTO> list = skuMapper.selectSkuAndStockBySpuId(spuId);
+        return this.setResultSuccess(list);
     }
 
     @Transactional

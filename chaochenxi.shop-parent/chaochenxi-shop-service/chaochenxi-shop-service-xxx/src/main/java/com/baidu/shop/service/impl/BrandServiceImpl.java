@@ -1,12 +1,17 @@
 package com.baidu.shop.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.BaseApiService;
 import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.BrandDTO;
+import com.baidu.shop.dto.SpuDTO;
 import com.baidu.shop.entity.BrandEntity;
 import com.baidu.shop.entity.CategoryBrandEntity;
+import com.baidu.shop.entity.SpecParamEntity;
+import com.baidu.shop.entity.SpuEntity;
 import com.baidu.shop.mapper.BrandMapper;
 import com.baidu.shop.mapper.CategoryBrandMapper;
+import com.baidu.shop.mapper.SpuMapper;
 import com.baidu.shop.service.BrandService;
 import com.baidu.shop.utils.BaiduBeanUtil;
 import com.baidu.shop.utils.ObjectUtil;
@@ -15,6 +20,7 @@ import com.baidu.shop.utils.StringUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
+import com.google.gson.internal.$Gson$Types;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
@@ -41,6 +47,25 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
     @Resource
     private CategoryBrandMapper categoryBrandMapper;
 
+    @Resource
+    private SpuMapper spuMapper;
+
+    @Transactional
+    @Override
+    public Result<JSONObject> upOrDowm(SpuDTO spuDTO) {
+        SpuEntity spuEntity = BaiduBeanUtil.copyProperties(spuDTO, SpuEntity.class);
+        spuEntity.setId(spuDTO.getId());
+        if (spuEntity.getSaleable() == 1){
+            spuEntity.setSaleable(0);
+            spuMapper.updateByPrimaryKeySelective(spuEntity);
+            return setResultSuccess("下架成功");
+        }else{
+            spuEntity.setSaleable(1);
+            spuMapper.updateByPrimaryKeySelective(spuEntity);
+            return setResultSuccess("上架成功");
+        }
+    }
+
     @Override
     public Result<List<BrandEntity>> getBrandByCate(Integer cid) {
 
@@ -48,6 +73,7 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
         return this.setResultSuccess(list);
     }
 
+    @Transactional
     @Override
     public Result<PageInfo<BrandEntity>> getBrandInfo(BrandDTO brandDTO) {
 
@@ -182,6 +208,14 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
     public Result<JsonObject> deleteBrand(Integer id) {
 
         //删除品牌
+        Example example = new Example(SpuEntity.class);
+        example.createCriteria().andEqualTo("brandId",id);
+        List<SpuEntity> list = spuMapper.selectByExample(example);
+        if(list.size() > 0){
+
+            return this.setResultError("此品牌绑定商品不能删除");
+        }
+
         brandMapper.deleteByPrimaryKey(id);
         this.deleteCategoryAndBrand(id);
 

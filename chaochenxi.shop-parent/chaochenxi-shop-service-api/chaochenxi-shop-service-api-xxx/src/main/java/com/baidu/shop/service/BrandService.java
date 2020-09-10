@@ -1,8 +1,11 @@
 package com.baidu.shop.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.BrandDTO;
+import com.baidu.shop.dto.SpuDTO;
 import com.baidu.shop.entity.BrandEntity;
+import com.baidu.shop.entity.SpuEntity;
 import com.baidu.shop.validate.group.MingruiOperation;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
@@ -35,5 +38,9 @@ public interface BrandService {
     @GetMapping(value = "brand/getBrandBycate")
     @ApiOperation(value = "通过分类id查询品牌信息")
     Result<List<BrandEntity>> getBrandByCate(Integer cid);
+
+    @PutMapping(value = "brand/upOrDown")
+    @ApiOperation(value = "商品上下架")
+    Result<JSONObject> upOrDowm(SpuDTO spuDTO);
 
 }

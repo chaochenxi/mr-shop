@@ -6,9 +6,11 @@ import com.baidu.shop.base.Result;
 import com.baidu.shop.entity.CategoryBrandEntity;
 import com.baidu.shop.entity.CategoryEntity;
 import com.baidu.shop.entity.SpecGroupEntity;
+import com.baidu.shop.entity.SpuEntity;
 import com.baidu.shop.mapper.CategoryBrandMapper;
 import com.baidu.shop.mapper.CategoryMapper;
 import com.baidu.shop.mapper.SpecGroupMapper;
+import com.baidu.shop.mapper.SpuMapper;
 import com.baidu.shop.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,9 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 
     @Resource
     private CategoryBrandMapper categoryBrandMapper;
+
+    @Resource
+    private SpuMapper spuMapper;
 
     @Override
     public Result<List<CategoryEntity>> getCategoryByPid(Integer pid) {
@@ -91,13 +96,12 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         Example example = new Example(CategoryEntity.class);
         example.createCriteria().andEqualTo("parentId",categoryEntity.getParentId());
         List<CategoryEntity> list = categoryMapper.selectByExample(example);
-        //判断查询出的数据是否只有一条
-        if(list.size() == 1){
-            CategoryEntity entity = new CategoryEntity();
-            entity.setId(categoryEntity.getParentId());
-            //将父节点的isParent状态改为0
-            entity.setIsParent(0);
-            categoryMapper.updateByPrimaryKeySelective(entity);
+
+        Example example3 = new Example(SpuEntity.class);
+        example3.createCriteria().andEqualTo("cid3",id);
+        List<SpuEntity> list3 = spuMapper.selectByExample(example3);
+        if(list3.size() > 0){
+            return this.setResultError("此分类绑定商品不能删除");
         }
 
         Example example1 = new Example(SpecGroupEntity.class);
@@ -112,6 +116,15 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         List<CategoryBrandEntity> list2 = categoryBrandMapper.selectByExample(example2);
         if(list2.size() > 0){
             return this.setResultError("此分类绑定品牌不能删除");
+        }
+
+        //判断查询出的数据是否只有一条
+        if(list.size() == 1){
+            CategoryEntity entity = new CategoryEntity();
+            entity.setId(categoryEntity.getParentId());
+            //将父节点的isParent状态改为0
+            entity.setIsParent(0);
+            categoryMapper.updateByPrimaryKeySelective(entity);
         }
 
         categoryMapper.deleteByPrimaryKey(id);
