@@ -1,0 +1,25 @@
+server:
+  port: 8300
+
+spring:
+  elasticsearch:
+    rest:
+      uris: 119.45.189.130:9200
+  application:
+    name: search-server
+
+#配置负载
+ribbon:
+  ConnectTimeout: 250 # 连接超时时间(ms)
+  ReadTimeout: 2000 # 通信超时时间(ms)
+  OkToRetryOnAllOperations: true # 是否对所有操作重试
+  MaxAutoRetriesNextServer: 2 # 同一服务不同实例的重试次数
+  MaxAutoRetries: 1 # 同一实例的重试次数
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 10000 # 熔断超时时长：6000ms

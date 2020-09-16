@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>chaochenxi-shop-service-xxx</module>
+        <module>mingrui-shop-service-search</module>
     </modules>
 
     <dependencies>

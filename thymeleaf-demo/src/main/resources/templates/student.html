@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<!--    &lt;!&ndash; th:指令依赖于h5&ndash;&gt;-->
+<!--    你好<span th:text="${stu.code}"></span><br>-->
+<!--    &lt;!&ndash;  data-th-text 指令支持非 h5&ndash;&gt;-->
+<!--    密码是：<span data-th-text="${stu.pass}"></span><br>-->
+<!--    &lt;!&ndash;对象['属性值'] 如果变量是动态的，可以用此属性&ndash;&gt;-->
+<!--    您的年龄是：<span th:text="${stu['age']}"></span><br>-->
+<!--    &lt;!&ndash;对象的value中有html需要渲染的使用 utext 输出&ndash;&gt;-->
+<!--    您喜欢的颜色是<span th:utext="${stu.likeColor}"></span>-->
+
+    <div th:object="${stu}">
+        <span th:text="*{code}"></span><br>
+        <span th:text="*{pass}"></span><br>
+        <span th:text="*{age}"></span><br>
+        <span th:text="*{likeColor}"></span><br>
+
+    </div>
+
+<!-- 字符串截取，分割-->
+<span th:text="${stu.code.substring(2)}"></span><br>
+<span th:text="${stu.code.split('')[2]}"></span><br>
+
+<!--字符串字面值-->
+<span th:text="'666'"></span><br>
+
+<!--数字字面值-->
+数字 :<span th:text="1024*2"></span><br>
+
+<!--布尔字面值-->
+<span th:if="${stu.age} >=18">
+        成年
+</span></body><br/>
+
+<span th:text="'你好' + ${stu.code} + '真的6666'"></span><br/>
+
+<span th:text="|你好${stu.code}真的6666|"></span>
+
+<span th:text="${stu.age} *2"></span>
+
+<span th:text="${stu.age} >=18 ? '成年' : '不成年' "></span>
+
+<span th:text="${stu.code} ?: ''"></span>
+
+<ul>
+    <li >编码--密码--年龄</li>
+    <li th:each="stu : ${stuList}">
+        <span th:text="${stu.code}"></span>--
+        <span th:text="${stu.pass}"></span>--
+        <span th:text="${stu.age}"></span>
+    </li>
+</ul>
+
+<span th:if="${stu.age>60}">可以退休</span>
+<span th:unless="${stu.age>60}">不能退休</span>
+
+<!--switch 选择-->
+<span th:switch="${stu.code}">
+  <span th:case="'001'">1号员工，骨灰级</span>
+  <span th:case="'002'">2号员工，元老级</span>
+  <span th:case="'003'">3号员工，老员工</span>
+  <span th:case="'007'">4号员工，新员工</span>
+  <span th:case="*">临时工</span>
+</span>
+
+</body>
+</html>
