@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName CategoryServiceImpl
@@ -41,6 +43,19 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 
     @Resource
     private SpuMapper spuMapper;
+
+    @Override
+    public Result<List<CategoryEntity>> getCategoryByIdList(String cidsStr) {
+
+        List<Integer> cidList = Arrays.asList(cidsStr.split(","))
+                .stream().map(cidStr -> Integer.parseInt(cidStr))
+                .collect(Collectors.toList());
+
+        List<CategoryEntity> list = categoryMapper.selectByIdList(cidList);
+
+        return this.setResultSuccess(list);
+    }
+
 
     @Override
     public Result<List<CategoryEntity>> getCategoryByPid(Integer pid) {
@@ -84,6 +99,7 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 
         //通过当前id查询分类信息
         CategoryEntity categoryEntity = categoryMapper.selectByPrimaryKey(id);
+        //判断查询的id是否存在
         if(categoryEntity == null){
             return this.setResultError("当前id不存在");
         }
@@ -138,5 +154,7 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 
         return this.setResultSuccess(byBrandId);
     }
+
+
 
 }

@@ -26,7 +26,7 @@ public interface GoodsService {
 
     @ApiOperation(value = "获取spu详情信息")
     @GetMapping(value = "goods/getSpuDetailBydSpu")
-    Result<SpuDetailEntity> getSpuDetailBydSpu(Integer spuId);
+    Result<SpuDetailEntity> getSpuDetailBydSpu(@RequestParam Integer spuId);
 
     @ApiOperation(value = "获取sku信息")
     @GetMapping(value = "goods/getSkuBySpuId")

@@ -43,4 +43,7 @@ public interface BrandService {
     @ApiOperation(value = "商品上下架")
     Result<JSONObject> upOrDowm(SpuDTO spuDTO);
 
+    @GetMapping(value = "brand/getBrandByIdList")
+    @ApiOperation(value = "通过品牌id集合查询品牌信息")
+    Result<List<BrandEntity>> getBrandByIdList(@RequestParam String brandIdsStr);
 }

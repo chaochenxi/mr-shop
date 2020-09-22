@@ -50,6 +50,18 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
     @Resource
     private SpuMapper spuMapper;
 
+    @Override
+    public Result<List<BrandEntity>> getBrandByIdList(String brandIdsStr) {
+
+        List<Integer> brandIdList = Arrays.asList(brandIdsStr.split(","))
+                .stream().map(brandIdStr -> Integer.parseInt(brandIdsStr))
+                .collect(Collectors.toList());
+
+        List<BrandEntity> list = brandMapper.selectByIdList(brandIdList);
+
+        return this.setResultSuccess(list);
+    }
+
     @Transactional
     @Override
     public Result<JSONObject> upOrDowm(SpuDTO spuDTO) {
@@ -65,6 +77,7 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
             return setResultSuccess("上架成功");
         }
     }
+
 
     @Override
     public Result<List<BrandEntity>> getBrandByCate(Integer cid) {
