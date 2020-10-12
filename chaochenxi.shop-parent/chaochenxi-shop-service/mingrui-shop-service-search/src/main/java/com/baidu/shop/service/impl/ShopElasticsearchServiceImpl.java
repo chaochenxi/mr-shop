@@ -27,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.expression.LongValue;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -71,13 +73,36 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
 
     @Override
-    public GoodsResponse search(String search,Integer page) {
+    public Result<JSONObject> saveData(Integer spuId) {
+
+        //通过spuId查询数据
+        SpuDTO spuDTO = new SpuDTO();
+        spuDTO.setId(spuId);
+        Result<List<SpuDTO>> spuResult = goodsFeign.getSpuInfo(spuDTO);
+
+        if(spuResult.getCode() == 200){
+            if(!spuResult.getData().isEmpty()){
+                elasticsearchRestTemplate.save(spuResult.getData().get(0));
+            }
+        }
+
+        return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<JSONObject> delData(Integer spuId) {
+        return null;
+    }
+
+    @Override
+    public GoodsResponse search(String search,Integer page,String filter) {
+        System.out.println(filter);
 
         //判断搜索内容不能为空
         if (StringUtil.isEmpty(search)) {
             throw new RuntimeException("搜索内容不能为空");
         }
-        SearchHits<GoodsDocument> searchHits = elasticsearchRestTemplate.search(this.getSearchQueryBuilder(search,page).build(), GoodsDocument.class);
+        SearchHits<GoodsDocument> searchHits = elasticsearchRestTemplate.search(this.getSearchQueryBuilder(search,page,filter).build(), GoodsDocument.class);
 
         List<SearchHit<GoodsDocument>> searchHits1 = searchHits.getSearchHits();
         List<SearchHit<GoodsDocument>> highLightHits = ESHighLightUtil.getHighLightHit(searchHits1);
@@ -104,14 +129,70 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
             categoryList = mapEntry.getValue();
         }
 
+        //通过cid去查询规格参数
+        Map<String, List<String>> specParamValueMap = this.getSpecParam(hotCid,search);
+
         List<BrandEntity> brandList = this.getBrandList(aggregations);//获取品牌集合
 
-        return new GoodsResponse(total, totalPage, brandList, categoryList, goodsList);
+        return new GoodsResponse(total, totalPage, brandList, categoryList, goodsList, specParamValueMap);
     }
 
-    private NativeSearchQueryBuilder getSearchQueryBuilder(String search, Integer page){
+    private Map<String, List<String>> getSpecParam(Integer hotCid,String search){
+        SpecParamDTO specParamDTO = new SpecParamDTO();
+        specParamDTO.setCid(hotCid);
+        specParamDTO.setSearching(true);//只搜索有查询属性的规格参数
+        Result<List<SpecParamEntity>> specParamResult = specificationFeign.getSpecParamInfo(specParamDTO);
+        if(specParamResult.getCode() == 200){
+            List<SpecParamEntity> specParamList = specParamResult.getData();
+            //聚合查询
+            NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+            queryBuilder.withQuery(QueryBuilders.multiMatchQuery(search,"brandName","categoryName","title"));
+            //分页必须得查询一条数据
+            queryBuilder.withPageable(PageRequest.of(0,1));
+
+            specParamList.stream().forEach(specParam -> {
+                queryBuilder.addAggregation(AggregationBuilders.terms(specParam.getName()).field("specs." + specParam.getName() + ".keyword"));
+            });
+
+            SearchHits<GoodsDocument> searchHits = elasticsearchRestTemplate.search(queryBuilder.build(), GoodsDocument.class);
+
+            Map<String, List<String>> map = new HashMap<>();
+            Aggregations aggregations = searchHits.getAggregations();
+            specParamList.stream().forEach(specParam -> {
+
+                Terms terms = aggregations.get(specParam.getName());
+                List<? extends Terms.Bucket> buckets = terms.getBuckets();
+                List<String> valueList = buckets.stream().map(bucket -> bucket.getKeyAsString()).collect(Collectors.toList());
+
+                map.put(specParam.getName(),valueList);
+            });
+            return map;
+        }
+        return null;
+    }
+
+    private NativeSearchQueryBuilder getSearchQueryBuilder(String search, Integer page,String filter){
 
         NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+
+        if(StringUtil.isNotEmpty(filter) && filter.length() > 2){
+            BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+            Map<String, String> filterMap = JSONUtil.toMapValueString(filter);
+
+            filterMap.forEach((key,value) -> {
+                MatchQueryBuilder matchQueryBuilder = null;
+
+                //分类 品牌和 规格参数的查询方式不一样
+                if(key.equals("cid3") || key.equals("brandId")){
+                    matchQueryBuilder = QueryBuilders.matchQuery(key, value);
+                }else{
+                    matchQueryBuilder = QueryBuilders.matchQuery("specs." + key + ".keyword",value);
+                }
+                boolQueryBuilder.must(matchQueryBuilder);
+            });
+            nativeSearchQueryBuilder.withFilter(boolQueryBuilder);
+        }
+
         //match通过值只能查询一个字段,multiMatch通过值可以查询多个字段
         nativeSearchQueryBuilder.withQuery(QueryBuilders.multiMatchQuery(search,"title","brandName","categoryName"));
 

@@ -16,6 +16,7 @@
     <modules>
         <module>chaochenxi-shop-service-xxx</module>
         <module>mingrui-shop-service-search</module>
+        <module>mingrui-shop-service-template</module>
     </modules>
 
     <dependencies>
@@ -55,6 +56,12 @@
             <groupId>com.baidu</groupId>
             <artifactId>chaochenxi-shop-service-api-xxx</artifactId>
             <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!--rabbitmq-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
     </dependencies>
